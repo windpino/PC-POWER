@@ -5,10 +5,10 @@
 
 // Central SaaS Firebase Configuration Fallback (Leave blank for user input, or pre-configure)
 const DEFAULT_CONFIG = {
-    databaseURL: "",
-    apiKey: "",
-    projectId: "",
-    appId: ""
+    databaseURL: "https://pc-power-on-off-default-rtdb.firebaseio.com",
+    apiKey: "AIzaSyB3jxGgCMHccPSEygDvr32m22X6oz0sMus",
+    projectId: "pc-power-on-off",
+    appId: "1:964905855833:web:cae3ff8cca20d3f8293a48"
 };
 
 // Global variables

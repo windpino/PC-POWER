@@ -12,10 +12,10 @@ const { exec } = require('child_process');
 // Central Firebase Configuration Fallback (Fill this in before compiling to EXE)
 const DEFAULT_CONFIG = {
     firebase: {
-        databaseURL: "",
-        apiKey: "",
-        projectId: "",
-        appId: ""
+        databaseURL: "https://pc-power-on-off-default-rtdb.firebaseio.com",
+        apiKey: "AIzaSyB3jxGgCMHccPSEygDvr32m22X6oz0sMus",
+        projectId: "pc-power-on-off",
+        appId: "1:964905855833:web:cae3ff8cca20d3f8293a48"
     },
     broadcastIp: "192.168.1.255"
 };
