@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Remote Power Control (SaaS)</title>
+    <!-- On-screen error tracker for debugging local file:// protocol -->
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            alert("자바스크립트 오류 감지:\n" + message + "\n\n파일: " + source + "\n라인: " + lineno);
+            return false;
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for beautiful icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-decor">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
+    <!-- 1. AUTHENTICATION CONTAINER (LOGIN/REGISTER SCREEN) -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card">
+            <div class="card-glow"></div>
+            <div class="logo" style="margin-bottom: 24px; justify-content: center; display: flex;">
+                <i class="fa-solid fa-power-off logo-icon"></i>
+                <span class="logo-text" style="margin-left: 8px;">ANTIGRAVITY <span class="highlight">POWER</span></span>
+            </div>
+            
+            <h2 id="authTitle" class="auth-title">로그인</h2>
+            <p class="auth-subtitle" id="authSubtitle">계정에 로그인하여 원격 전원 제어판에 액세스하세요.</p>
+            
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="auth_email"><i class="fa-solid fa-envelope"></i> 이메일 주소</label>
+                    <input type="email" id="auth_email" placeholder="example@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="auth_password"><i class="fa-solid fa-lock"></i> 비밀번호</label>
+                    <input type="password" id="auth_password" placeholder="비밀번호를 입력하세요" required>
+                </div>
+                <button type="submit" class="save-btn" id="authSubmitBtn" style="margin-top: 10px; width: 100%;">
+                    <i class="fa-solid fa-right-to-bracket"></i> 로그인
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>또는</span>
+            </div>
+
+            <button type="button" class="action-btn google-login-btn" id="googleLoginBtn" style="width: 100%; justify-content: center; gap: 8px;">
+                <i class="fa-brands fa-google"></i> Google 계정으로 계속하기
+            </button>
+
+            <div class="auth-toggle-msg">
+                <span id="authToggleText">계정이 없으신가요?</span>
+                <a href="#" id="authToggleLink">회원가입</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APPLICATION CONTAINER (DASHBOARD) -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-power-off logo-icon"></i>
+                <span class="logo-text">ANTIGRAVITY <span class="highlight">POWER</span></span>
+            </div>
+            
+            <div class="header-controls" style="display: flex; align-items: center; gap: 12px;">
+                <!-- Connection Status -->
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot warning"></span>
+                    <span class="status-text">연결 중...</span>
+                </div>
+                
+                <!-- User Profile and Logout -->
+                <div class="user-profile-header" id="userProfileHeader">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <span class="user-name" id="userNameText">사용자</span>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn" title="로그아웃"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="app-tabs">
+            <button class="tab-btn active" data-tab="control"><i class="fa-solid fa-gamepad"></i> 제어</button>
+            <button class="tab-btn" data-tab="setup"><i class="fa-solid fa-circle-info"></i> 설정 가이드</button>
+            <button class="tab-btn" data-tab="settings" id="settingsTabBtn"><i class="fa-solid fa-gear"></i> 시스템 설정</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="app-content">
+            
+            <!-- 1. CONTROL TAB -->
+            <section class="tab-content active" id="tab-control">
+                
+                <!-- Device Selector Bar -->
+                <div class="device-selector-bar" id="deviceSelectorBar">
+                    <div class="dropdown-wrapper">
+                        <i class="fa-solid fa-desktop dropdown-icon"></i>
+                        <select id="deviceSelect" class="device-dropdown">
+                            <!-- Dynamic Content -->
+                        </select>
+                    </div>
+                    <button class="add-device-inline-btn" id="addDeviceInlineBtn"><i class="fa-solid fa-plus"></i> PC 추가</button>
+                </div>
+
+                <!-- Empty State (No PC linked yet) -->
+                <div class="control-card empty-state-card" id="emptyStateCard" style="display: none; padding: 48px 24px;">
+                    <div class="card-glow"></div>
+                    <i class="fa-solid fa-computer-mouse" style="font-size: 4rem; color: var(--text-secondary); margin-bottom: 20px; opacity: 0.5;"></i>
+                    <h2>연동된 PC가 없습니다</h2>
+                    <p style="color: var(--text-secondary); margin: 12px 0 24px 0; max-width: 320px; font-size: 0.9rem;">
+                        PC_Power_Setup.exe 파일을 PC에서 실행해 6자리 인증번호(PIN)를 받아 등록해 주세요.
+                    </p>
+                    <button class="save-btn" id="emptyAddPcBtn" style="max-width: 200px;"><i class="fa-solid fa-laptop-medical"></i> 새 PC 추가하기</button>
+                </div>
+
+                <!-- Main PC Control Card -->
+                <div class="control-card" id="mainControlCard">
+                    <div class="card-glow"></div>
+                    
+                    <div class="device-info-header">
+                        <h2 id="targetPcNameDisplay">내 컴퓨터</h2>
+                        <span class="device-badge offline" id="pcStateBadge">OFFLINE</span>
+                    </div>
+
+                    <!-- Power Button Container -->
+                    <div class="power-button-container">
+                        <div class="outer-ring" id="powerOuterRing"></div>
+                        <button class="power-btn offline" id="powerBtn" disabled>
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </div>
+
+                    <!-- Status Text -->
+                    <div class="status-display">
+                        <div class="main-status" id="mainStatusText">연결 설정을 먼저 완료해 주세요.</div>
+                        <div class="sub-status" id="subStatusText">시스템 설정 탭에서 Firebase 정보를 입력해야 합니다.</div>
+                    </div>
+
+                    <!-- System Metrics -->
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label"><i class="fa-solid fa-network-wired"></i> IP 주소</span>
+                            <span class="metric-value" id="pcIpText">-</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label"><i class="fa-solid fa-barcode"></i> MAC 주소</span>
+                            <span class="metric-value" id="pcMacText">-</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label"><i class="fa-regular fa-clock"></i> 최종 확인</span>
+                            <span class="metric-value" id="pcLastSeenText">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. SETUP GUIDE TAB -->
+            <section class="tab-content" id="tab-setup">
+                <div class="guide-container">
+                    <h2 class="section-title"><i class="fa-solid fa-book"></i> 원격 부팅 & 종료 설정 가이드</h2>
+                    <p class="section-desc">컴퓨터를 외부에서 안정적으로 켜고 끄기 위해 아래 단계들을 차례로 설정해 주세요.</p>
+
+                    <div class="accordion">
+                        <!-- Step 1: BIOS -->
+                        <div class="accordion-item active">
+                            <div class="accordion-header">
+                                <span class="step-num">01</span>
+                                <h3>BIOS 메인보드 설정 (컴퓨터 켜기 기본)</h3>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-body">
+                                <p>PC 전원이 완전히 꺼진 상태에서 전원을 켜려면 메인보드 BIOS 설정이 필요합니다.</p>
+                                <ul>
+                                    <li><strong>부팅 시 Del 또는 F2 키</strong>를 입력하여 BIOS 모드로 진입합니다.</li>
+                                    <li>
+                                        <strong>방법 A: Wake-on-LAN 설정 (추천)</strong>
+                                        <ul>
+                                            <li>Advanced / Power Management Setup 메뉴로 이동합니다.</li>
+                                            <li><code>Power On By PCI-E</code> 또는 <code>Wake on LAN</code> 설정을 <strong>Enabled</strong>로 변경합니다.</li>
+                                            <li>ErP Ready 설정이 있다면 <strong>Disabled</strong>로 설정해 전원 공급을 유지합니다.</li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <strong>방법 B: 스마트 플러그 연동 (자동 켜기)</strong>
+                                        <ul>
+                                            <li>Power Management 메뉴에서 <code>Restore on AC Power Loss</code> (또는 <code>AC Back</code>) 설정을 <strong>Always On</strong> 또는 <strong>Last State</strong>로 변경합니다.</li>
+                                            <li>이 설정을 켜면 스마트 플러그 전원을 차단했다가 다시 켤 때 PC가 자동으로 부팅됩니다.</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Windows Device Manager -->
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <span class="step-num">02</span>
+                                <h3>윈도우 랜카드 설정 (Wake-on-LAN 필수)</h3>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-body">
+                                <p>윈도우가 종료된 상태에서도 랜카드가 대기 전력을 받으며 신호를 기다리도록 설정합니다.</p>
+                                <ol>
+                                    <li>윈도우 시작 버튼 우클릭 -> <strong>장치 관리자</strong>를 실행합니다.</li>
+                                    <li><strong>네트워크 어댑터</strong> 항목을 펼치고 사용 중인 유선 랜카드(예: Realtek, Intel)를 더블 클릭합니다.</li>
+                                    <li><strong>[전원 관리]</strong> 탭에서 <code>이 장치를 사용하여 컴퓨터를 대기 상태에서 깨움</code> 및 <code>매직 패킷에서만 컴퓨터를 깨움</code>에 체크합니다.</li>
+                                    <li><strong>[고급]</strong> 탭으로 이동하여 아래 속성들을 활성화(Enabled)합니다.
+                                        <ul>
+                                            <li><code>웨이크 온 랜 (Wake on Magic Packet)</code> -> <strong>활성화(Enabled)</strong></li>
+                                            <li><code>절전형 이더넷 (Energy Efficient Ethernet)</code> -> <strong>비활성화(Disabled)</strong> (원치 않는 해제 방지)</li>
+                                        </ul>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Target PC Agent Installation -->
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <span class="step-num">03</span>
+                                <h3>에이전트 프로그램 실행 (종료 및 페어링용)</h3>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-body">
+                                <p>제어하고 싶은 컴퓨터에 에이전트 실행 파일(`PC_Power_Setup.exe`)을 배치하고 더블 클릭하여 실행합니다.</p>
+                                <ol>
+                                    <li>프로그램이 처음 실행되면 검은 콘솔창에 <strong>6자리 인증번호(PIN)</strong>가 표시됩니다.</li>
+                                    <li>웹 대시보드에서 <strong>[PC 추가]</strong> 버튼을 누르고 이 6자리 숫자를 입력합니다.</li>
+                                    <li>연동이 성공하면 에이전트가 조용히 화면에서 사라져 백그라운드 서비스(시작프로그램)로 자동 등록됩니다.</li>
+                                    <li>연동 직후 대시보드 화면에 해당 PC가 **ONLINE** 상태로 나타납니다.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Boot Bridge setup -->
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <span class="step-num">04</span>
+                                <h3>원격으로 PC 켜기 (WOL 브릿지 설정)</h3>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-body">
+                                <p>PC가 완전히 꺼지면 스스로 인터넷을 통해 부팅 신호를 받을 수 없습니다. 아래 중 하나의 방법으로 전원을 켭니다.</p>
+                                <div class="method-cards">
+                                    <div class="method-card">
+                                        <h4><i class="fa-solid fa-cube"></i> 방법 A: WOL 브릿지 에이전트 (권장)</h4>
+                                        <p>공유기에 연결된 항상 켜진 기기(라즈베리 파이, 항상 켜진 구형 폰, 홈서버 등)에 <code>bridge.js</code>를 실행해 둡니다. 웹 대시보드에서 켜기 버튼을 누르면 이 브릿지 기기가 대신 WOL 패킷을 날려 PC를 깨웁니다.</p>
+                                    </div>
+                                    <div class="method-card">
+                                        <h4><i class="fa-solid fa-plug"></i> 방법 B: 스마트 플러그 활용</h4>
+                                        <p>BIOS에서 AC Back을 켜고, 스마트 플러그 전원을 차단(OFF)했다가 다시 켬(ON)으로써 PC를 구동합니다. Tuya, Tapo 등의 자동화 규칙으로 편리하게 제어 가능합니다.</p>
+                                    </div>
+                                    <div class="method-card">
+                                        <h4><i class="fa-solid fa-network-wired"></i> 방법 C: 공유기 WOL 직접 연결</h4>
+                                        <p>iptime 등 공유기의 관리 페이지에 접속해 외부 WOL 기능을 활성화하고 DDNS 주소를 확보한 경우, 외부에서 공유기에 접속하여 WOL 패킷을 보냅니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. CONFIG SETTINGS TAB -->
+            <section class="tab-content" id="tab-settings">
+                <div class="settings-card">
+                    <h2 class="section-title"><i class="fa-solid fa-sliders"></i> Firebase & 시스템 설정</h2>
+                    <p class="section-desc">웹 대시보드와 PC 에이전트 간의 실시간 동기화를 위해 무료 Firebase Realtime Database 정보를 입력해 주세요.</p>
+
+                    <form id="configForm">
+                        <div class="form-group">
+                            <label for="db_url"><i class="fa-solid fa-database"></i> Firebase Database URL</label>
+                            <input type="url" id="db_url" placeholder="https://your-project-default-rtdb.firebaseio.com" required>
+                            <span class="input-help">Firebase Console -> Realtime Database 메뉴 상단의 URL 주소</span>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="api_key"><i class="fa-solid fa-key"></i> API Key</label>
+                                <input type="text" id="api_key" placeholder="AIzaSy..." required>
+                            </div>
+                            <div class="form-group">
+                                <label for="project_id"><i class="fa-solid fa-id-badge"></i> Project ID</label>
+                                <input type="text" id="project_id" placeholder="my-pc-power-project" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label for="app_id"><i class="fa-solid fa-mobile-screen-button"></i> App ID</label>
+                                <input type="text" id="app_id" placeholder="1:12345:web:abcd..." required>
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="save-btn"><i class="fa-solid fa-floppy-disk"></i> 설정 저장 및 연결</button>
+                            <button type="button" class="reset-btn" id="resetConfigBtn"><i class="fa-solid fa-trash-can"></i> 초기화</button>
+                        </div>
+                    </form>
+
+                    <hr class="settings-divider">
+
+                    <!-- Registered PC List Settings Section -->
+                    <div class="pc-management-section">
+                        <h3><i class="fa-solid fa-desktop"></i> 내 등록된 PC 관리</h3>
+                        <div class="pc-list-settings" id="pcListSettingsContainer">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Created by Antigravity AI &copy; 2026. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- 3. ADD PC MODAL DIALOG -->
+    <div class="modal-overlay" id="addPcModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-laptop-medical"></i> 새 PC 등록 및 연동</h3>
+                <button class="close-modal-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">컴퓨터에 에이전트 프로그램(`PC_Power_Setup.exe`)을 실행했을 때 나타나는 6자리 PIN 인증번호를 입력해 주세요.</p>
+                <form id="addPcForm">
+                    <div class="form-group">
+                        <label for="pairing_pin"><i class="fa-solid fa-key"></i> 6자리 인증번호 (PIN)</label>
+                        <input type="text" id="pairing_pin" placeholder="예: 529813" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_pc_name"><i class="fa-solid fa-pen"></i> PC 기기명 (별명)</label>
+                        <input type="text" id="new_pc_name" placeholder="예: 거실 컴퓨터, 사무실 노트북" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_pc_mac"><i class="fa-solid fa-barcode"></i> PC MAC 주소 (WOL용, 선택)</label>
+                        <input type="text" id="new_pc_mac" placeholder="예: AA:BB:CC:DD:EE:FF" autocomplete="off">
+                        <span class="input-help">입력하지 않아도 에이전트 연동 완료 시 자동으로 감지되어 수집됩니다.</span>
+                    </div>
+                    <div class="button-group" style="margin-top: 24px;">
+                        <button type="submit" class="save-btn"><i class="fa-solid fa-link"></i> 기기 등록 및 연동</button>
+                        <button type="button" class="reset-btn" id="cancelAddPcBtn">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (v8 global CDN to support double-clicking local file://) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Web App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>

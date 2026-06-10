@@ -1,0 +1,17 @@
+{
+  "name": "pc-power-agent",
+  "version": "1.0.0",
+  "description": "Windows background agent for remote power controller",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js",
+    "build": "pkg agent.js --targets node18-win-x64 --output PC_Power_Setup.exe"
+  },
+  "dependencies": {
+    "firebase": "^10.8.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "private": true
+}

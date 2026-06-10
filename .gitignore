@@ -1,0 +1,15 @@
+# Node.js dependencies
+node_modules/
+
+# Private credentials and local configurations
+agent-config.json
+
+# Local log files
+agent.log
+
+# Compiled binaries (oversized for GitHub, exceeding 100MB limit)
+PC_Power_Setup.exe
+
+# OS generated files
+.DS_Store
+Thumbs.db
