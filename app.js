@@ -261,6 +261,8 @@ function initializeFirebase(config) {
                 updateConnectionStatus('success', '연결됨');
                 
                 // Show profile
+                const profileHeader = document.getElementById('userProfileHeader');
+                if (profileHeader) profileHeader.style.display = 'flex';
                 userNameText.textContent = user.displayName || user.email;
                 userAvatar.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
                 
@@ -268,6 +270,8 @@ function initializeFirebase(config) {
                 syncUserDevices();
             } else {
                 currentUser = null;
+                const profileHeader = document.getElementById('userProfileHeader');
+                if (profileHeader) profileHeader.style.display = 'none';
                 appContainer.style.display = 'none';
                 authContainer.style.display = 'flex';
                 updateConnectionStatus('danger', '로그인 필요');
