@@ -88,15 +88,23 @@ const pcListSettingsContainer = document.getElementById('pcListSettingsContainer
 let isRegistering = false;
 
 // 1. TAB SWITCHING LOGIC
-tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const targetTab = btn.getAttribute('data-tab');
-        
+function switchTab(tabName) {
+    const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+    const tabContent = document.getElementById(`tab-${tabName}`);
+    
+    if (tabBtn && tabContent) {
         tabButtons.forEach(t => t.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
         
-        btn.classList.add('active');
-        document.getElementById(`tab-${targetTab}`).classList.add('active');
+        tabBtn.classList.add('active');
+        tabContent.classList.add('active');
+    }
+}
+
+tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        switchTab(targetTab);
     });
 });
 
@@ -193,7 +201,7 @@ function loadConfig() {
         // Show config tab and update status
         authContainer.style.display = 'none';
         appContainer.style.display = 'block';
-        document.getElementById('settingsTabBtn').click();
+        switchTab('settings');
         updateConnectionStatus('danger', '설정 필요');
     }
 }
@@ -665,4 +673,8 @@ function renderSettingsPcList() {
 }
 
 // 10. Load configuration on entry
-window.addEventListener('DOMContentLoaded', loadConfig);
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', loadConfig);
+} else {
+    loadConfig();
+}
