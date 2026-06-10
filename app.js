@@ -178,6 +178,16 @@ function loadConfig() {
         projectIdInput.value = currentConfig.projectId || '';
         appIdInput.value = currentConfig.appId || '';
         
+        // Hide settings tab button if using the hardcoded default config (SaaS mode)
+        const settingsTabBtn = document.getElementById('settingsTabBtn');
+        if (settingsTabBtn) {
+            if (currentConfig === DEFAULT_CONFIG) {
+                settingsTabBtn.style.display = 'none';
+            } else {
+                settingsTabBtn.style.display = 'flex'; // show for custom self-hosted config
+            }
+        }
+        
         initializeFirebase(currentConfig);
     } else {
         // Show config tab and update status
