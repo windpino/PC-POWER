@@ -304,7 +304,7 @@ function spawnSilentBackgroundProcess() {
 // WINDOWS NATIVE SHUTDOWN
 function executeWindowsShutdown() {
     log("로컬 윈도우 종료 커맨드 실행 (shutdown /s /t 5)...");
-    exec('shutdown /s /t 5 /c "Antigravity Power Controller: Remote shutdown initiated"', (error) => {
+    exec('shutdown /s /t 5 /c "Inevitgen Power Controller: Remote shutdown initiated"', (error) => {
         if (error) {
             log(`종료 실행 오류: ${error.message}`);
             return;
