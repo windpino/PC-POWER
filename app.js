@@ -295,6 +295,26 @@ function initializeFirebase(config) {
 }
 
 // 6. FIREBASE AUTH SERVICE ACTIONS
+function showFriendlyAuthError(title, error) {
+    console.error(title + ":", error);
+    let errMsg = error.message || String(error);
+    
+    // Check if the provider is not enabled in Firebase Console
+    if (errMsg.includes("CONFIGURATION_NOT_FOUND") || error.code === "auth/operation-not-allowed") {
+        alert(
+            `${title}에 실패했습니다.\n\n` +
+            `❌ 원인: Firebase 인증(Authentication) 설정이 비활성화되어 있습니다.\n\n` +
+            `🛠️ 해결 방법:\n` +
+            `1. Firebase 콘솔 (https://console.firebase.google.com/) 에 접속합니다.\n` +
+            `2. 본인의 프로젝트를 선택합니다.\n` +
+            `3. 왼쪽 메뉴에서 빌드(Build) -> Authentication -> Sign-in method 탭으로 이동합니다.\n` +
+            `4. '이메일/비밀번호' (Email/Password) 및 'Google' 로그인 제공업체를 '사용 설정(Enable)'으로 활성화해 주세요.`
+        );
+    } else {
+        alert(`${title} 실패: ${errMsg}`);
+    }
+}
+
 authForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = authEmail.value.trim();
@@ -303,17 +323,17 @@ authForm.addEventListener('submit', (e) => {
     if (isRegistering) {
         firebase.auth().createUserWithEmailAndPassword(email, password)
             .then(() => alert("회원가입에 성공했습니다!"))
-            .catch(error => alert("회원가입 실패: " + error.message));
+            .catch(error => showFriendlyAuthError("회원가입", error));
     } else {
         firebase.auth().signInWithEmailAndPassword(email, password)
-            .catch(error => alert("로그인 실패: " + error.message));
+            .catch(error => showFriendlyAuthError("로그인", error));
     }
 });
 
 googleLoginBtn.addEventListener('click', () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     firebase.auth().signInWithPopup(provider)
-        .catch(error => alert("Google 로그인 실패: " + error.message));
+        .catch(error => showFriendlyAuthError("Google 로그인", error));
 });
 
 logoutBtn.addEventListener('click', () => {
